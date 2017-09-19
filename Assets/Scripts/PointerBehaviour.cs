@@ -68,7 +68,7 @@ public class PointerBehaviour : MonoBehaviour {
 
 	void Update()
 	{
-
+		
 		if (Input.GetKeyDown(KeyCode.Space)) {
 			CenterOnSelect ();
 		}
@@ -129,7 +129,7 @@ public class PointerBehaviour : MonoBehaviour {
 			Camera.main.transform.parent.position = new Vector3 ( Camera.main.transform.parent.position.x, Camera.main.transform.parent.position.y , Camera.main.transform.parent.position.z  + 0.5f) ;
 			Cursor.SetCursor(cursorTextureUp, hotSpot, cursorMode);
 		}
-		if (Input.mousePosition.x < 9*Screen.width/10 && Input.mousePosition.x > Screen.width/10 && Input.mousePosition.y < 9*Screen.height/10 && Input.mousePosition.y > Screen.height/10)
+		if (Input.mousePosition.x < 9 * Screen.width/10 && Input.mousePosition.x > Screen.width/10 && Input.mousePosition.y < 9*Screen.height/10 && Input.mousePosition.y > Screen.height/10)
 			Cursor.SetCursor(cursorTexture, hotSpot, cursorMode);
 
 
@@ -206,7 +206,7 @@ public class PointerBehaviour : MonoBehaviour {
 				}
 			}
 				
-			else if (settlingDistrict && hit.collider.transform.parent.GetComponent<TileStateManager> ().territory == TileTerritories.Inside) {
+			else if (settlingDistrict && hit.collider.transform.parent.GetComponent<TileStateManager> ().territory == TileTerritories.Inside && hit.collider.transform.parent.GetComponent<TileStateManager> ().building == TileBuildings.Empty) {
 
 
 				ClearTilesHighlight ();
@@ -220,8 +220,8 @@ public class PointerBehaviour : MonoBehaviour {
 					if (allOverlappingTilesOut [i].transform.parent.GetComponent<TileStateManager> ().territory == TileTerritories.Empty && allOverlappingTilesOut [i] != overObject.transform) {
 						//allOverlappingTilesOut [i].GetComponent<MeshRenderer> ().material = outside;
 						//allOverlappingTilesOut [i].transform.parent.GetComponent<TileStateManager> ().ShowUI (true);
-						allOverlappingTilesIn [i].transform.parent.GetComponent<TileStateManager> ().ShowFeeds (false);
-						allOverlappingTilesIn [i].transform.parent.GetComponent<TileStateManager> ().ShowTile (true);
+						allOverlappingTilesOut [i].transform.parent.GetComponent<TileStateManager> ().ShowFeeds (false);
+						allOverlappingTilesOut [i].transform.parent.GetComponent<TileStateManager> ().ShowTile (true);
 					}
 				}
 				for (int i = 0; i < allOverlappingTilesIn.Count; i++) {

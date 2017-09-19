@@ -63,13 +63,21 @@ public class TileStateManager : MonoBehaviour {
 
 	public void CreateInsideContent (Material inside) {
 		territory = TileTerritories.Inside;
-		tile.GetComponent<MeshRenderer> ().material.color = new Color(0.75f, 0.82f, 0.22f, 0.5f);    
+		Color c = new Color (0.75f, 0.82f, 0.22f, 0.5f);
+		tile.GetComponent<MeshRenderer> ().material.color = c;
+		foreach (Transform tr in tile.transform) {
+			tr.GetComponent<MeshRenderer> ().material.color = c;
+		}
 		//transform.GetComponentInChildren<MeshRenderer> ().material = inside;
 	}
 
 	public void CreateOutsideContent (Material outside) {
 		territory = TileTerritories.Outside;
-		tile.GetComponent<MeshRenderer> ().material.color = new Color (0.93f, 0.45f, 0.15f, 0.5f);
+		Color c = new Color (0.93f, 0.45f, 0.15f, 0.5f);
+		tile.GetComponent<MeshRenderer> ().material.color = c;
+		foreach (Transform tr in tile.transform) {
+			tr.GetComponent<MeshRenderer> ().material.color = c;
+		}
 		//transform.GetComponentInChildren<MeshRenderer> ().material = outside;
 	}
 
