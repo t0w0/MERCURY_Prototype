@@ -3,13 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class HexGrid : MonoBehaviour {
-	
+
 	public Transform TilePrefab;
 	public List<TileStateManager> Tiles;
 	public GameObject TileUI;
 	public Transform UIParent;
-
-	TileStateManager[,] grid;
 
 	public int x = 50;
 	public int y = 50;
@@ -50,7 +48,6 @@ public class HexGrid : MonoBehaviour {
 				UI.transform.localPosition = UIPos;
 				Tiles.Add (hex.GetComponent<TileStateManager>());
 				hex.GetComponent<TileStateManager>().InitTile (UI);
-				TileStateManager [i, j] = hex.GetComponent<TileStateManager> ();
 			}
 		}
 	}

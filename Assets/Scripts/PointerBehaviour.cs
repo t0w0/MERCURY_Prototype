@@ -19,6 +19,8 @@ public class PointerBehaviour : MonoBehaviour {
 	private CursorMode cursorMode = CursorMode.ForceSoftware;
 	private Vector3 mousePos;
 
+	public LineRenderer path;
+
 	//Dependencies
 	public HexGrid hexGrid;
 
@@ -70,6 +72,7 @@ public class PointerBehaviour : MonoBehaviour {
 	public bool settlingDistrict = false;
 	public bool spawningArmy = false;
 	private bool townSettle = false;
+	private bool armyPath = false;
 	private int effectIndex = 0;
 
 	public bool AllFeedsShown = false;
@@ -108,6 +111,9 @@ public class PointerBehaviour : MonoBehaviour {
 		else if (Input.GetKeyDown (KeyCode.A)) {
 			SpawnMode();
 		}
+		else if (Input.GetKeyDown (KeyCode.M)) {
+			armyPath = (armyPath == true ? false : true);
+		}
 
 		//OnMouseClick
 		else if (Input.GetMouseButton(0) && overObject != null) {
@@ -139,7 +145,11 @@ public class PointerBehaviour : MonoBehaviour {
 				Select (overObject.transform);
 			}
 		}
-			
+
+		if (armyPath) {
+			SimplePathfinding ();
+		}
+
 		//OnOver
 		ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
@@ -450,7 +460,15 @@ public class PointerBehaviour : MonoBehaviour {
 
 	public void SimplePathfinding() {
 	
-		
+		if (overObject != null && selectedTile != null) {
+			if (selectedTile.transform.parent.GetComponent<TileStateManager> ().unit == TileUnits.Empty)
+				return;
+			TileStateManager startTile = selectedTile.transform.parent.GetComponent<TileStateManager> ();
+			Debug.Log (startTile);
+			TileStateManager endTile = overObject.transform.parent.GetComponent<TileStateManager> ();
+			path.SetPosition (0, startTile.transform.position + Vector3.up * startTile.transform.localScale.y + Vector3.up * .5f);
+			path.SetPosition (1, endTile.transform.position + Vector3.up * endTile.transform.localScale.y + Vector3.up * .5f);
+		}
 
 	}
 
