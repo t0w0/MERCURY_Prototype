@@ -11,6 +11,8 @@ public class TileStateManager : MonoBehaviour {
 	public GameObject effectModel;
 	public GameObject tile;
 	public GameObject feeds;
+	public Transform myTransform;
+	public GameObject cartouche;
 
 	public int food = 0;
 	public int science = 0;
@@ -23,6 +25,10 @@ public class TileStateManager : MonoBehaviour {
 
 	public bool feedsShown = false;
 	public bool tileShown = false;
+
+	public void Start () {
+		myTransform = transform;
+	}
 
 	public void InitTile (GameObject ui) {
 		food = Random.Range (0, 7);
@@ -38,22 +44,20 @@ public class TileStateManager : MonoBehaviour {
 		ShowTile (false);
 	}
 	
-	public void CreateTownOnTile (GameObject prefab, GameObject prefabEffect, Vector3 pos, Material inside) {
+	public void CreateTownOnTile (GameObject prefab, GameObject prefabEffect, GameObject townCartouchePrefab, Vector3 pos) {
 		building = TileBuildings.Town;
 		buildingModel = Instantiate (prefab, pos, Quaternion.identity);
-		//transform.GetComponentInChildren<MeshRenderer> ().material = inside;
 		ShowFeeds(true);
 		ShowTile (true);
-		buildingModel = Instantiate (prefab, pos, Quaternion.identity);
 		effectModel = Instantiate (prefabEffect, pos, Quaternion.identity);
+		cartouche = Instantiate (townCartouchePrefab, pos, Quaternion.identity);
 	}
 
-	public void CreateDistrictOnTile (GameObject prefab, GameObject prefabEffect, Vector3 pos, Material inside) {
+	public void CreateDistrictOnTile (GameObject prefab, GameObject prefabEffect, Vector3 pos) {
 		building = TileBuildings.District;
 		buildingModel = Instantiate (prefab, pos, Quaternion.identity);
 		ShowFeeds (true);
 		ShowTile (true);
-		//transform.GetComponentInChildren<MeshRenderer> ().material = inside;
 		effectModel = Instantiate (prefabEffect, pos, Quaternion.identity);
 	}
 
@@ -61,24 +65,14 @@ public class TileStateManager : MonoBehaviour {
 		building = TileBuildings.Empty;
 	}
 
-	public void CreateInsideContent (Material inside) {
+	public void CreateInsideContent (Color c) {
 		territory = TileTerritories.Inside;
-		Color c = new Color (0.75f, 0.82f, 0.22f, 0.5f);
 		tile.GetComponent<MeshRenderer> ().material.color = c;
-		foreach (Transform tr in tile.transform) {
-			tr.GetComponent<MeshRenderer> ().material.color = c;
-		}
-		//transform.GetComponentInChildren<MeshRenderer> ().material = inside;
 	}
 
-	public void CreateOutsideContent (Material outside) {
+	public void CreateOutsideContent (Color c) {
 		territory = TileTerritories.Outside;
-		Color c = new Color (0.93f, 0.45f, 0.15f, 0.5f);
 		tile.GetComponent<MeshRenderer> ().material.color = c;
-		foreach (Transform tr in tile.transform) {
-			tr.GetComponent<MeshRenderer> ().material.color = c;
-		}
-		//transform.GetComponentInChildren<MeshRenderer> ().material = outside;
 	}
 
 	public void SpawnArmyOnTile (GameObject prefab, Vector3 pos) {
@@ -109,5 +103,11 @@ public class TileStateManager : MonoBehaviour {
 	}
 	public void ShowBuilding (bool state) {
 		buildingModel.SetActive (state);
+	}
+	public void ChangeInconstructibleEffect (GameObject prefab) {
+
+		Vector3 pos = new Vector3 (transform.position.x, transform.localScale.y, transform.position.z);
+		Destroy (effectModel);
+		effectModel = GameObject.Instantiate (prefab, pos, Quaternion.identity, transform); 
 	}
 }

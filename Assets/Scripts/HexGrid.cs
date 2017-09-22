@@ -8,6 +8,7 @@ public class HexGrid : MonoBehaviour {
 	public List<TileStateManager> Tiles;
 	public GameObject TileUI;
 	public Transform UIParent;
+	public Cloth ClothFilter;
 
 	public int x = 50;
 	public int y = 50;
@@ -18,6 +19,8 @@ public class HexGrid : MonoBehaviour {
 	public float UIDist = 0.1f;
 
 	public Material[] GroundText;
+	public Texture2D heightmap;
+	public Vector3 size = new Vector3(100, 5, 100);
 
 	private float offsetX, offsetY;
 
@@ -29,12 +32,18 @@ public class HexGrid : MonoBehaviour {
 
 		for( int i = 0; i < x; i++ ) {
 			for( int j = 0; j < y; j++ ) {
+
 				Vector2 hexpos = HexOffset( i, j );
 				Vector3 pos = new Vector3( hexpos.x, 0, hexpos.y );
 				Transform hex = GameObject.Instantiate(TilePrefab, pos, Quaternion.identity, transform);
 				hex.localPosition = pos;
-				hex.localScale = new Vector3 (1, Random.Range(1f, Random.Range (1f, Random.Range (1f, height))), 1);
-				hex.GetComponentInChildren<MeshRenderer> ().material = GroundText [Random.Range(0,Random.Range (0, GroundText.Length+1))];
+
+				int x = Mathf.FloorToInt(pos.x / size.x * heightmap.width);
+				int z = Mathf.FloorToInt(pos.z / size.z * heightmap.height);
+				hex.localScale = new Vector3 (1, heightmap.GetPixel(x, z).grayscale * size.y, 1);
+				hex.GetComponentInChildren<MeshRenderer> ().material = GroundText [0];
+				hex.GetComponentInChildren<MeshRenderer> ().material.mainTextureOffset = new Vector2 (i * 0.04f, 0.04f * j);
+
 				Vector3 UIPos = new Vector3 (pos.x, hex.localScale.y + UIDist, pos.z);
 				GameObject UI = GameObject.Instantiate(TileUI, UIPos, Quaternion.identity, transform) as GameObject;
 				UI.transform.localPosition = UIPos;
@@ -42,6 +51,12 @@ public class HexGrid : MonoBehaviour {
 				hex.GetComponent<TileStateManager>().InitTile (UI);
 			}
 		}
+
+		CapsuleCollider[] tmp = new CapsuleCollider[Tiles.Count];
+		for (int i = 0; i < tmp.Length; i++) {
+			tmp [i] = Tiles [i].transform.GetChild (0).GetComponent<CapsuleCollider> ();
+		}
+		ClothFilter.capsuleColliders = tmp;
 	}
 
 	Vector2 HexOffset( int x, int y ) {
