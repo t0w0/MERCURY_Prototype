@@ -51,12 +51,6 @@ public class HexGrid : MonoBehaviour {
 				hex.GetComponent<TileStateManager>().InitTile (UI);
 			}
 		}
-
-		CapsuleCollider[] tmp = new CapsuleCollider[Tiles.Count];
-		for (int i = 0; i < tmp.Length; i++) {
-			tmp [i] = Tiles [i].transform.GetChild (0).GetComponent<CapsuleCollider> ();
-		}
-		ClothFilter.capsuleColliders = tmp;
 	}
 
 	Vector2 HexOffset( int x, int y ) {

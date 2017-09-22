@@ -437,6 +437,15 @@ public class PointerBehaviour : MonoBehaviour {
 			allOverlappingTilesIn [i].tile.GetComponent<MeshRenderer> ().material.color = insideColor;
 			allOverlappingTilesIn [i].ShowTile(true);
 		}
+
+		OverlapTilesOut (allOverlappingTilesOut, objectRadius*2);
+
+		for (int i = 0; i < allOverlappingTilesOut.Count; i++) {
+			if (allOverlappingTilesOut [i].territory != TileTerritories.Inside && allOverlappingTilesOut [i] != overObject.transform) {
+				allOverlappingTilesOut [i].tile.GetComponent<MeshRenderer> ().material.color = inconstructColor;
+				allOverlappingTilesOut [i].ShowTile(true);
+			}
+		}
 	}
 
 	public void constructionEffect (bool state) {
@@ -455,35 +464,37 @@ public class PointerBehaviour : MonoBehaviour {
 		allOverlappingColliders = Physics.OverlapSphere (overObject.transform.position, rad);
 
 		for (int i = 0; i < allOverlappingColliders.Length; i++) {
-			Debug.Log (allOverlappingColliders [i].transform.parent.transform);
-			float heightDifference = Mathf.Abs (overObject.transform.parent.transform.localScale.y - allOverlappingColliders [i].transform.parent.transform.localScale.y);
-			if (heightDifference < maxHeight && !allOverlappingTilesIn.Contains (allOverlappingColliders [i].transform.parent.GetComponent<TileStateManager> ())) {
-				allOverlappingTilesIn.Add (allOverlappingColliders [i].transform.parent.GetComponent<TileStateManager> ());
+			TileStateManager tileScript = allOverlappingColliders [i].transform.parent.GetComponent<TileStateManager> ();
+
+			float heightDifference = Mathf.Abs (overObject.transform.parent.transform.localScale.y - tileScript.transform.localScale.y);
+			if (heightDifference < maxHeight) {
+				if (!allOverlappingTilesIn.Contains (tileScript))
+					allOverlappingTilesIn.Add (tileScript);
 			} else {
-				inconstructibleOverlappingTiles.Add(allOverlappingColliders [i].transform.parent.GetComponent<TileStateManager> ());
+				if (!allOverlappingTilesIn.Contains (tileScript) && !inconstructibleOverlappingTiles.Contains(tileScript))
+					inconstructibleOverlappingTiles.Add(tileScript);
 			}
 		}
-		Debug.Log (inconstructibleOverlappingTiles.Count);
 	}
 
 	public void OverlapTilesOut (List<TileStateManager> overlap, float rad) {
 
 		allOverlappingTilesOut.Clear ();
 
-		for (int i = 0; i < allOverlappingTilesIn.Count; i++) {
+		for (int i = 0; i <overlap.Count; i++) {
 
 			allOverlappingColliders = Physics.OverlapSphere (allOverlappingTilesIn[i].transform.position, rad);
 
 			for (int j = 0 ; j < allOverlappingColliders.Length ; j++) {
 				TileStateManager tileScript = allOverlappingColliders [j].transform.parent.GetComponent<TileStateManager> ();
-				float heightDifference = Mathf.Abs (allOverlappingTilesIn[i].transform.localScale.y - tileScript.transform.localScale.y);
+				float heightDifference = Mathf.Abs (overlap[i].transform.localScale.y - tileScript.transform.localScale.y);
 				if (heightDifference < maxHeight && !allOverlappingTilesOut.Contains (tileScript) && tileScript.territory == TileTerritories.Empty) {
-					if (!allOverlappingTilesIn.Contains (tileScript))
+					if (!overlap.Contains (tileScript))
 						allOverlappingTilesOut.Add (tileScript);
 				}
 				else {
-					if (!allOverlappingTilesIn.Contains (tileScript))
-						inconstructibleOverlappingTiles.Add(allOverlappingColliders [i].transform.parent.GetComponent<TileStateManager> ());
+					if (!inconstructibleOverlappingTiles.Contains (tileScript) && !overlap.Contains (tileScript) && !allOverlappingTilesOut.Contains (tileScript))
+						inconstructibleOverlappingTiles.Add(tileScript);
 				}
 			}
 		}
