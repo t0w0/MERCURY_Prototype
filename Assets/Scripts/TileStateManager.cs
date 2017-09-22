@@ -49,7 +49,7 @@ public class TileStateManager : MonoBehaviour {
 		buildingModel = Instantiate (prefab, pos, Quaternion.identity);
 		ShowFeeds(true);
 		ShowTile (true);
-		effectModel = Instantiate (prefabEffect, pos, Quaternion.identity);
+		effectModel = Instantiate (prefabEffect, pos, Quaternion.identity, UI.transform);
 		cartouche = Instantiate (townCartouchePrefab, pos, Quaternion.identity);
 	}
 
@@ -58,7 +58,7 @@ public class TileStateManager : MonoBehaviour {
 		buildingModel = Instantiate (prefab, pos, Quaternion.identity);
 		ShowFeeds (true);
 		ShowTile (true);
-		effectModel = Instantiate (prefabEffect, pos, Quaternion.identity);
+		effectModel = Instantiate (prefabEffect, pos, Quaternion.identity, UI.transform);
 	}
 
 	public void DestroyTileContent () {
@@ -108,6 +108,6 @@ public class TileStateManager : MonoBehaviour {
 
 		Vector3 pos = new Vector3 (transform.position.x, transform.localScale.y, transform.position.z);
 		Destroy (effectModel);
-		effectModel = GameObject.Instantiate (prefab, pos, Quaternion.identity, transform); 
+		effectModel = GameObject.Instantiate (prefab, pos, Quaternion.identity, UI.transform); 
 	}
 }

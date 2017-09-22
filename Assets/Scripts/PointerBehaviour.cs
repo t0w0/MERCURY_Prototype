@@ -541,22 +541,26 @@ public class PointerBehaviour : MonoBehaviour {
 		int b = w/50;
 
 		if (mousePos.x > 0 && mousePos.x < b) {
-			camTr.position = new Vector3 ( camTr.position.x - panIncr, camTr.position.y , camTr.position.z) ;
+			if (camTr.position.x > -20f)
+				camTr.position = new Vector3 ( camTr.position.x - panIncr, camTr.position.y , camTr.position.z) ;
 			Cursor.SetCursor(cursorTextureLeft, hotSpot, cursorMode);
 			mousePos = Vector3.zero;
 		}
 		else if (mousePos.x < w && mousePos.x > w-b) {
-			camTr.position = new Vector3 ( camTr.position.x + panIncr, camTr.position.y , camTr.position.z) ;
+			if (camTr.position.x < 20f)
+				camTr.position = new Vector3 ( camTr.position.x + panIncr, camTr.position.y , camTr.position.z) ;
 			Cursor.SetCursor(cursorTextureRight, hotSpot, cursorMode);
 			mousePos = Vector3.zero;
 		}
 		if (mousePos.y > 0 && mousePos.y < b) {
-			camTr.position = new Vector3 ( camTr.position.x, camTr.position.y , camTr.position.z - panIncr) ;
+			if (camTr.position.z > -36.5f)
+				camTr.position = new Vector3 ( camTr.position.x, camTr.position.y , camTr.position.z - panIncr) ;
 			Cursor.SetCursor(cursorTextureDown, hotSpot, cursorMode);
 			mousePos = Vector3.zero;
 		}
 		else if (mousePos.y < w && mousePos.y > h-b) {
-			camTr.position = new Vector3 ( camTr.position.x, camTr.position.y , camTr.position.z  + panIncr) ;
+			if (camTr.position.z < 20f)
+				camTr.position = new Vector3 ( camTr.position.x, camTr.position.y , camTr.position.z  + panIncr) ;
 			Cursor.SetCursor(cursorTextureUp, hotSpot, cursorMode);
 			mousePos = Vector3.zero;
 		}
