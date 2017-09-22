@@ -448,6 +448,12 @@ public class PointerBehaviour : MonoBehaviour {
 		}
 	}
 
+	public void SimplePathfinding() {
+	
+		
+
+	}
+
 	public void constructionEffect (bool state) {
 		for (int i = 0; i < Towns.Count; i++) {
 			Towns [i].ConstructionEffect (state);
@@ -564,7 +570,7 @@ public class PointerBehaviour : MonoBehaviour {
 			mousePos = Vector3.zero;
 		}
 		if (mousePos.y > 0 && mousePos.y < b) {
-			if (camTr.position.z > -36.5f)
+			if (camTr.position.z > -20f)
 				camTr.position = new Vector3 ( camTr.position.x, camTr.position.y , camTr.position.z - panIncr) ;
 			Cursor.SetCursor(cursorTextureDown, hotSpot, cursorMode);
 			mousePos = Vector3.zero;

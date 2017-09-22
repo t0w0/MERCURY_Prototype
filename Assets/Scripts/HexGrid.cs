@@ -8,7 +8,8 @@ public class HexGrid : MonoBehaviour {
 	public List<TileStateManager> Tiles;
 	public GameObject TileUI;
 	public Transform UIParent;
-	public Cloth ClothFilter;
+
+	TileStateManager[,] grid;
 
 	public int x = 50;
 	public int y = 50;
@@ -49,6 +50,7 @@ public class HexGrid : MonoBehaviour {
 				UI.transform.localPosition = UIPos;
 				Tiles.Add (hex.GetComponent<TileStateManager>());
 				hex.GetComponent<TileStateManager>().InitTile (UI);
+				TileStateManager [i, j] = hex.GetComponent<TileStateManager> ();
 			}
 		}
 	}
