@@ -19,10 +19,10 @@ public class PointerBehaviour : MonoBehaviour {
 	private CursorMode cursorMode = CursorMode.ForceSoftware;
 	private Vector3 mousePos;
 
-	public LineRenderer path;
-
 	//Dependencies
 	public HexGrid hexGrid;
+	public LineRenderer pathLine;
+	public GameObject selectHighlight; 
 
 	//Materials
 	public Material ghostTown;
@@ -30,15 +30,11 @@ public class PointerBehaviour : MonoBehaviour {
 	//Colors
 	public Color selectionColor;
 	public Color gridColor;
-	public Color insideColor;
-	public Color outsideColor;
-	public Color inconstructColor;
+	public Color[] territoriesColor; // 0: inside 1: reachable 2:future 3:unreachable 4:unconstructible
+	public Color[] moveColor; // 0: unwalkable 1:reachable 2:reachable 3: reachable 4: reachable 
 
 	//Prefabs
-	public GameObject town;
-	public GameObject district;
-	public GameObject army;
-	public GameObject selectHighlight;
+	public GameObject town, district, army;
 	public GameObject[] inconstructibleEffects;
 	public GameObject surtuile;
 	public Transform surtuilesParent;
@@ -46,14 +42,15 @@ public class PointerBehaviour : MonoBehaviour {
 
 	//Parameters
 	public float objectRadius = 2; 
-	public float maxHeight = 0.5f;
 	private float pitch; 					//Camera pitch
-	private float pitchIncr = 0.05f;
-	private float panIncr = 0.5f;
+	private float pitchIncr = .05f;
+	private float panIncr = .5f;
+	public float maxHeight = .5f;
 
+	//Variables
 	private GameObject overObject;
 	private GameObject buildingInstance;
-	private Transform selectedTile;
+	private Transform selectedObject;
 	public GameObject terrain;
 
 	public List<TileStateManager> Towns;
@@ -61,6 +58,8 @@ public class PointerBehaviour : MonoBehaviour {
 	public List<TileStateManager> Armies;
 	public List<GameObject> GhostDistricts;
 	public List<GameObject> Surtuiles;
+
+	public List<TileStateManager> path;
 
 	public Collider[] allOverlappingColliders;
 	public List<TileStateManager> allOverlappingTilesIn;
@@ -114,19 +113,19 @@ public class PointerBehaviour : MonoBehaviour {
 		else if (Input.GetKeyDown (KeyCode.M)) {
 			armyPath = (armyPath == true ? false : true);
 		}
+		else if (Input.GetKeyUp(KeyCode.P)) {
+			ComplexPathfinding (selectedObject.transform.parent.GetComponent<TileStateManager> (), overObject.transform.parent.GetComponent<TileStateManager> ());
+		}
 
 		//OnMouseClick
 		else if (Input.GetMouseButton(0) && overObject != null) {
 
 			TileStateManager overTile = overObject.transform.parent.GetComponent<TileStateManager> ();
 
-			if (settlingTown) {
+			if (settlingTown)
 				Construct (town);
-			}
 
-			else if (settlingDistrict) {
-				if (overTile.territory != TileTerritories.Inside)
-					return;
+			else if (settlingDistrict && overTile.territory != TileTerritories.Inside) {
 				FilterTileFrom (TileTerritories.Empty, false);
 				Construct (district);
 				DeleteGhostDistrict ();
@@ -144,10 +143,6 @@ public class PointerBehaviour : MonoBehaviour {
 			else if (!settlingTown && !settlingDistrict && !spawningArmy) {
 				Select (overObject.transform);
 			}
-		}
-
-		if (armyPath) {
-			SimplePathfinding ();
 		}
 
 		//OnOver
@@ -192,16 +187,16 @@ public class PointerBehaviour : MonoBehaviour {
 
 				foreach (TileStateManager t in allOverlappingTilesOut) {
 					t.ShowTile (true);
-					t.tile.GetComponent<MeshRenderer> ().material.color = outsideColor;
+					t.tile.GetComponent<MeshRenderer> ().material.color = territoriesColor[2];
 				}
 				foreach (TileStateManager t in allOverlappingTilesIn) {
 					t.ShowFeeds (true);
 					t.ShowTile (true);
-					t.tile.GetComponent<MeshRenderer> ().material.color = insideColor;
+					t.tile.GetComponent<MeshRenderer> ().material.color = territoriesColor[1];
 				}
 				foreach (TileStateManager t in inconstructibleOverlappingTiles) {
 					t.ShowTile (true);
-					t.tile.GetComponent<MeshRenderer> ().material.color = inconstructColor;
+					t.tile.GetComponent<MeshRenderer> ().material.color = territoriesColor[4];
 				} 
 
 				if (overObject != null) {
@@ -237,7 +232,7 @@ public class PointerBehaviour : MonoBehaviour {
 				foreach (TileStateManager t in allOverlappingTilesOut) {
 					if (t.territory == TileTerritories.Empty && t != overObject.transform) {
 						t.ShowTile (true);
-						t.tile.GetComponent<MeshRenderer> ().material.color = outsideColor;
+						t.tile.GetComponent<MeshRenderer> ().material.color = territoriesColor[2];
 					}
 
 				}
@@ -245,13 +240,13 @@ public class PointerBehaviour : MonoBehaviour {
 					if (t.territory == TileTerritories.Outside && t != overObject.transform) {
 						t.ShowFeeds (true);
 						t.ShowTile (true);
-						t.tile.GetComponent<MeshRenderer> ().material.color = insideColor;
+						t.tile.GetComponent<MeshRenderer> ().material.color = territoriesColor[1];
 					}
 				}
 				foreach (TileStateManager t in inconstructibleOverlappingTiles) {
 					if (t.territory == TileTerritories.Outside && t != overObject.transform) {
 						t.ShowTile (true);
-						t.tile.GetComponent<MeshRenderer> ().material.color = inconstructColor;
+						t.tile.GetComponent<MeshRenderer> ().material.color = territoriesColor[4];
 					}
 				} 
 		
@@ -297,7 +292,7 @@ public class PointerBehaviour : MonoBehaviour {
 
 		foreach (TileStateManager tile in hexGrid.Tiles) {
 			
-			if (tile.territory == TileTerritories.Empty && tile.transform.GetChild (0) != selectedTile) {
+			if (tile.territory == TileTerritories.Empty && tile.transform.GetChild (0) != selectedObject) {
 				tile.ShowTile (false);
 				tile.ShowFeeds (false);
 				tile.tile.GetComponent<MeshRenderer> ().material.color = selectionColor;
@@ -435,24 +430,20 @@ public class PointerBehaviour : MonoBehaviour {
 
 	public void SelectArmy() {
 		ClearTilesHighlight ();
-		OverlapTilesIn (selectedTile, objectRadius*2);
+		OverlapTilesIn (selectedObject, objectRadius*2);
 		OverlapTilesOut (allOverlappingTilesIn, objectRadius*2);
 		for (int i = 0; i < allOverlappingTilesOut.Count; i++) {
 			if (allOverlappingTilesOut [i].territory != TileTerritories.Inside && allOverlappingTilesOut [i] != overObject.transform) {
-				allOverlappingTilesOut [i].tile.GetComponent<MeshRenderer> ().material.color = outsideColor;
+				allOverlappingTilesOut [i].tile.GetComponent<MeshRenderer> ().material.color = moveColor[1];
 				allOverlappingTilesOut [i].ShowTile(true);
 			}
 		}
-		for (int i = 0; i < allOverlappingTilesIn.Count; i++) {
-			allOverlappingTilesIn [i].tile.GetComponent<MeshRenderer> ().material.color = insideColor;
-			allOverlappingTilesIn [i].ShowTile(true);
-		}
 
-		OverlapTilesOut (allOverlappingTilesOut, objectRadius*2);
+		OverlapTilesOut (allOverlappingTilesIn, objectRadius*2);
 
 		for (int i = 0; i < allOverlappingTilesOut.Count; i++) {
 			if (allOverlappingTilesOut [i].territory != TileTerritories.Inside && allOverlappingTilesOut [i] != overObject.transform) {
-				allOverlappingTilesOut [i].tile.GetComponent<MeshRenderer> ().material.color = inconstructColor;
+				allOverlappingTilesOut [i].tile.GetComponent<MeshRenderer> ().material.color = moveColor[2];
 				allOverlappingTilesOut [i].ShowTile(true);
 			}
 		}
@@ -460,16 +451,95 @@ public class PointerBehaviour : MonoBehaviour {
 
 	public void SimplePathfinding() {
 	
-		if (overObject != null && selectedTile != null) {
-			if (selectedTile.transform.parent.GetComponent<TileStateManager> ().unit == TileUnits.Empty)
+		if (overObject != null && selectedObject != null) {
+			if (selectedObject.transform.parent.GetComponent<TileStateManager> ().unit == TileUnits.Empty)
 				return;
-			TileStateManager startTile = selectedTile.transform.parent.GetComponent<TileStateManager> ();
-			Debug.Log (startTile);
+			TileStateManager startTile = selectedObject.transform.parent.GetComponent<TileStateManager> ();
+
 			TileStateManager endTile = overObject.transform.parent.GetComponent<TileStateManager> ();
-			path.SetPosition (0, startTile.transform.position + Vector3.up * startTile.transform.localScale.y + Vector3.up * .5f);
-			path.SetPosition (1, endTile.transform.position + Vector3.up * endTile.transform.localScale.y + Vector3.up * .5f);
+			pathLine.SetPosition (0, startTile.transform.position + Vector3.up * startTile.transform.localScale.y + Vector3.up * .5f);
+			pathLine.SetPosition (1, endTile.transform.position + Vector3.up * endTile.transform.localScale.y + Vector3.up * .5f);
 		}
 
+	}
+
+	public void ComplexPathfinding(TileStateManager st, TileStateManager e) {
+
+
+		Debug.Log ("Pathfinding");
+			
+		TileStateManager startTile = st;
+
+		TileStateManager targetTile = e;
+		
+		List<TileStateManager> openSet = new List<TileStateManager> ();
+		HashSet<TileStateManager> closedSet = new HashSet<TileStateManager> ();
+
+		openSet.Add (startTile);
+
+		while (openSet.Count > 0) {
+			TileStateManager currentNode = openSet [0];
+
+			for (int i = 1; i < openSet.Count; i++) {
+				if (openSet [i].fCost < currentNode.fCost || openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost) {
+					currentNode = openSet [i];
+					//Debug.Log ("Pass");
+				}
+			} 
+			openSet.Remove (currentNode);
+			closedSet.Add (currentNode);
+			if (currentNode == targetTile) {
+				RetracePath (startTile, targetTile);
+				return;
+			}
+
+			foreach (TileStateManager neighbour in GetNeighbours(currentNode, 2)) {
+				Debug.Log ("Pass");
+				if (!neighbour.walkable || closedSet.Contains (neighbour)) {
+					continue;
+				}
+
+				int newMovementCostToNeighbour = currentNode.gCost + GetDistance (currentNode, neighbour);
+				if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour)) {
+					neighbour.gCost = newMovementCostToNeighbour;
+					neighbour.hCost = GetDistance (neighbour, targetTile);
+					neighbour.parent = currentNode;
+
+					if (!openSet.Contains (neighbour))
+						openSet.Add (neighbour);
+				}
+			}
+		}
+	}
+
+	void RetracePath (TileStateManager startTile, TileStateManager endTile) {
+		path = new List<TileStateManager> ();
+		TileStateManager currentTile = endTile;
+
+		while (currentTile != startTile) {
+			path.Add (currentTile);
+			currentTile = currentTile.parent;
+		}
+
+		path.Reverse ();
+
+		hexGrid.path = path;
+		pathLine.positionCount = path.Count;
+		for (int i = 0; i < path.Count; i++) {
+			if (i == 0)
+				pathLine.SetPosition (0, startTile.floorPosition + Vector3.up * .5f);
+			else
+				pathLine.SetPosition (i, path [i].floorPosition + Vector3.up * .5f);
+		}
+	}
+
+	int GetDistance (TileStateManager tileA, TileStateManager tileB) {
+		int dstX = Mathf.Abs (tileA.gridX - tileB.gridX);
+		int dstY = Mathf.Abs (tileA.gridY - tileB.gridY);
+
+		if (dstX > dstY)
+			return dstY + dstX - (dstY / 2);
+		return dstX + dstY - (dstX / 2);
 	}
 
 	public void constructionEffect (bool state) {
@@ -501,6 +571,26 @@ public class PointerBehaviour : MonoBehaviour {
 		}
 	}
 
+	public List<TileStateManager> GetNeighbours (TileStateManager tile, float rad) {
+
+		Collider[] overlapCols = Physics.OverlapSphere (tile.transform.position, rad);
+		List<TileStateManager> nbours = new List<TileStateManager> ();
+		Debug.Log (overlapCols.Length);
+
+		for (int i = 0; i < overlapCols.Length; i++) {
+			
+			TileStateManager tileScript = overlapCols [i].transform.parent.GetComponent<TileStateManager> ();
+
+			//nbours.Add (tileScript);
+
+			float heightDifference = Mathf.Abs (tile.transform.localScale.y - tileScript.transform.localScale.y);
+			if (heightDifference < maxHeight && tileScript != tile) {
+					nbours.Add (tileScript);
+			}
+		}
+		return nbours;
+	}
+
 	public void OverlapTilesOut (List<TileStateManager> overlap, float rad) {
 
 		allOverlappingTilesOut.Clear ();
@@ -525,18 +615,18 @@ public class PointerBehaviour : MonoBehaviour {
 	}
 
 	public void Select (Transform tr) {
-		selectedTile = tr;
+		selectedObject = tr;
 		ClearTilesHighlight ();
-		selectedTile.parent.GetComponent<TileStateManager> ().ShowTile (true);
-		selectedTile.parent.GetComponent<TileStateManager> ().ShowFeeds (true);
+		selectedObject.parent.GetComponent<TileStateManager> ().ShowTile (true);
+		selectedObject.parent.GetComponent<TileStateManager> ().ShowFeeds (true);
 		selectHighlight.transform.position = tr.position;
-		if (selectedTile.parent.GetComponent<TileStateManager> ().unit == TileUnits.Army) {
+		if (selectedObject.parent.GetComponent<TileStateManager> ().unit == TileUnits.Army) {
 			SelectArmy ();
 		}
 	}
 
 	public void CenterOnSelect () {
-		Camera.main.transform.position = new Vector3 (selectedTile.position.x, selectedTile.position.y + 10, selectedTile.position.z - 7.5f);
+		Camera.main.transform.position = new Vector3 (selectedObject.position.x, selectedObject.position.y + 10, selectedObject.position.z - 7.5f);
 	}
 
 	public void SettlingMode () {

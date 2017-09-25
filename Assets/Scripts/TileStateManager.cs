@@ -12,12 +12,21 @@ public class TileStateManager : MonoBehaviour {
 	public GameObject tile;
 	public GameObject feeds;
 	public Transform myTransform;
+	public Vector3 worldPosition;
+	public Vector3 floorPosition;
+	public bool walkable;
 	public GameObject cartouche;
+	public int gridX;
+	public int gridY;
+	public TileStateManager parent;
 
 	public int food = 0;
 	public int science = 0;
 	public int industry = 0;
 	public int dust = 0;
+
+	public int gCost;
+	public int hCost;
 
 	public TileBuildings building = TileBuildings.Empty;
 	public TileUnits unit = TileUnits.Empty;
@@ -30,20 +39,34 @@ public class TileStateManager : MonoBehaviour {
 		myTransform = transform;
 	}
 
-	public void InitTile (GameObject ui) {
+	public void InitTile (bool _walkable, Vector3 _worldPos, int _gridX, int _gridY,  GameObject _UI) {
 		food = Random.Range (0, 7);
 		science = Random.Range (0, 7);
 		industry = Random.Range (0, 7);
 		dust = Random.Range (0, 7);
-		UI = ui;
+		UI = _UI;
 		feeds = UI.transform.GetChild (1).gameObject;
 		tile = UI.transform.GetChild (0).gameObject;
 		ActualiseFeeds ();
+		worldPosition = transform.position;
+		floorPosition = _UI.transform.position;
 
 		ShowFeeds (false);
 		ShowTile (false);
+
+		walkable = _walkable;
+		worldPosition = _worldPos;
+		gridX = _gridX;
+		gridY = _gridY;
 	}
-	
+
+
+	public int fCost {
+		get { 
+			return gCost + hCost;
+		}
+	}
+
 	public void CreateTownOnTile (GameObject prefab, GameObject prefabEffect, GameObject townCartouchePrefab, Vector3 pos) {
 		building = TileBuildings.Town;
 		buildingModel = Instantiate (prefab, pos, Quaternion.identity);
